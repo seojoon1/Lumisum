@@ -3,6 +3,7 @@ import type { Route } from "./+types/home";
 import {
   buildLeaderboard,
   calculatePlayerScores,
+  ESCAPE_BONUS,
   parsePlayers,
   type GameRecord,
 } from "../lib/er-scores";
@@ -15,9 +16,11 @@ export function meta({}: Route.MetaArgs) {
 }
 
 const STORAGE_KEY = "lumi-scrim-games";
+const ESCAPE_KEY = "lumi-scrim-escapes";
 
 export default function Home() {
   const [games, setGames] = useState<GameRecord[]>([]);
+  const [escapes, setEscapes] = useState<Record<string, number>>({});
   const [csv, setCsv] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -28,6 +31,8 @@ export default function Home() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setGames(JSON.parse(raw));
+      const rawEsc = localStorage.getItem(ESCAPE_KEY);
+      if (rawEsc) setEscapes(JSON.parse(rawEsc));
     } catch {
       /* 무시 */
     }
@@ -39,7 +44,21 @@ export default function Home() {
     if (loaded) localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
   }, [games, loaded]);
 
-  const leaderboard = useMemo(() => buildLeaderboard(games), [games]);
+  useEffect(() => {
+    if (loaded) localStorage.setItem(ESCAPE_KEY, JSON.stringify(escapes));
+  }, [escapes, loaded]);
+
+  const leaderboard = useMemo(() => buildLeaderboard(games, escapes), [games, escapes]);
+
+  const changeEscape = (nickname: string, delta: number) => {
+    setEscapes((prev) => {
+      const next = { ...prev };
+      const v = (next[nickname] || 0) + delta;
+      if (v <= 0) delete next[nickname];
+      else next[nickname] = v;
+      return next;
+    });
+  };
 
   const addGame = () => {
     if (!csv.trim()) return;
@@ -146,7 +165,10 @@ export default function Home() {
             ))}
             <button
               onClick={() => {
-                if (confirm("모든 판 기록을 지울까요?")) setGames([]);
+                if (confirm("모든 판 기록을 지울까요? (탈출 기록 포함)")) {
+                  setGames([]);
+                  setEscapes({});
+                }
               }}
               className="ml-auto text-xs text-gray-500 hover:text-red-600"
             >
@@ -159,7 +181,7 @@ export default function Home() {
         {leaderboard.length > 0 && (
           <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
             <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-900 px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
-              <span>누적 순위 · 총 {games.length}판</span>
+              <span>누적 순위 · 총 {games.length}판 · 탈출 +{ESCAPE_BONUS}점/회</span>
               <button
                 onClick={copyResult}
                 className="rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
@@ -173,6 +195,7 @@ export default function Home() {
                   <th className="w-16 px-4 py-2.5 font-medium">순위</th>
                   <th className="px-4 py-2.5 font-medium">닉네임</th>
                   <th className="w-20 px-4 py-2.5 text-right font-medium">판수</th>
+                  <th className="px-4 py-2.5 text-center font-medium">탈출</th>
                   <th className="w-24 px-4 py-2.5 text-right font-medium">점수</th>
                 </tr>
               </thead>
@@ -183,6 +206,26 @@ export default function Home() {
                     <td className="px-4 py-2.5 font-medium">{r.nickname}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-gray-500 dark:text-gray-400">
                       {r.games}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => changeEscape(r.nickname, -1)}
+                          disabled={r.escapes === 0}
+                          className="h-6 w-6 rounded border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30"
+                          title="탈출 -1"
+                        >
+                          −
+                        </button>
+                        <span className="w-5 text-center tabular-nums">{r.escapes}</span>
+                        <button
+                          onClick={() => changeEscape(r.nickname, 1)}
+                          className="h-6 w-6 rounded border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                          title="탈출 +1"
+                        >
+                          +
+                        </button>
+                      </div>
                     </td>
                     <td className="px-4 py-2.5 text-right font-semibold tabular-nums">
                       {Math.round(r.totalScore * 100) / 100}

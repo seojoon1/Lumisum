@@ -19,6 +19,8 @@ export interface PlayerScore extends PlayerData {
 }
 
 export const TERMINATE_BONUS = 1.5;
+/** 탈출 1회당 추가 점수 (CSV에 없으므로 수동 입력) */
+export const ESCAPE_BONUS = 2;
 
 /**
  * CSV 헤더 → 내부 필드 매핑. 각 필드의 별칭은 "우선순위 순서"로 나열한다(앞쪽이 먼저 매칭).
@@ -175,15 +177,21 @@ export interface GameRecord {
 export interface CumulativeRow {
   rank: number; // 동점은 같은 순위 (1,2,2,4 …)
   nickname: string;
-  totalScore: number;
+  totalScore: number; // 탈출 보너스까지 포함한 최종 점수
   games: number; // 참여 판 수
+  escapes: number; // 탈출 횟수 (수동 입력)
 }
 
 /**
  * 여러 판(GameRecord[])을 닉네임 기준으로 누적 합산해 순위표를 만든다.
  * 루미섬 내전은 판마다 팀이 바뀌므로, 팀이 아니라 닉네임이 기준이 된다.
+ *
+ * @param escapes 닉네임별 탈출 횟수 (수동 입력). 1회당 ESCAPE_BONUS 점 추가.
  */
-export function buildLeaderboard(games: GameRecord[]): CumulativeRow[] {
+export function buildLeaderboard(
+  games: GameRecord[],
+  escapes: Record<string, number> = {}
+): CumulativeRow[] {
   const acc = new Map<string, { totalScore: number; games: number }>();
   for (const g of games) {
     for (const s of g.scores) {
@@ -195,7 +203,15 @@ export function buildLeaderboard(games: GameRecord[]): CumulativeRow[] {
   }
 
   const rows = [...acc.entries()]
-    .map(([nickname, v]) => ({ nickname, totalScore: v.totalScore, games: v.games }))
+    .map(([nickname, v]) => {
+      const escapeCount = escapes[nickname] || 0;
+      return {
+        nickname,
+        games: v.games,
+        escapes: escapeCount,
+        totalScore: v.totalScore + escapeCount * ESCAPE_BONUS,
+      };
+    })
     .sort((a, b) => b.totalScore - a.totalScore);
 
   // 동점 처리: 표준 순위(앞 등수 인원만큼 건너뜀)
