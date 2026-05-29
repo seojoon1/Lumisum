@@ -193,6 +193,10 @@ export default function Home() {
             </table>
           </div>
         )}
+
+        <footer className="mt-10 text-center text-xs text-gray-400 dark:text-gray-600">
+          made by seojoon1
+        </footer>
       </div>
     </main>
   );
