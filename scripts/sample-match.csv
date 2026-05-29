@@ -1,0 +1,25 @@
+rank, level, character, nickname, weapon, best weapon mastery, best weapon mastery level, total field kill, team kill, elimination, down can not eliminate, repeat down can not eliminate, down can eliminate, repeat down can eliminate, kill, assist, hunting, killer, gameId, teamName, tournament total score, tournament rank score, tournament kill score
+1, 20, Lenox, 캡틴짹, 운명의고리, Defense, 20, 20, 21, 7, 11, 0, 2, 0, 1, 17, 24, , 60581520, 인하 오토인덕, 24.5, 10, 14.5
+1, 20, Nadine, asdasdsa, 혈색반월-진홍, Defense, 20, 20, 21, 7, 11, 0, 2, 0, 10, 6, 89, , 60581520, 인하 오토인덕, 24.5, 10, 14.5
+1, 20, Celine, Lohel, 체이서, Defense, 20, 20, 21, 7, 11, 0, 2, 0, 9, 9, 96, , 60581520, 인하 오토인덕, 24.5, 10, 14.5
+2, 19, Johann, LYNEY, 더썬, Defense, 19, 8, 8, 6, 2, 0, 0, 0, 1, 6, 25, asdasdsa, 60581520, KSJ내아내임, 14, 7, 7
+2, 20, Irem, 얼큰한돼지국밥, 파이어볼, Defense, 20, 8, 8, 6, 2, 0, 0, 0, 4, 1, 50, asdasdsa, 60581520, KSJ내아내임, 14, 7, 7
+2, 19, YuMin, Elisha, 여제, Defense, 20, 8, 8, 6, 2, 0, 0, 0, 3, 2, 126, asdasdsa, 60581520, KSJ내아내임, 14, 7, 7
+3, 19, Henry, Sellb, 생사부, Defense, 20, 11, 11, 6, 1, 0, 4, 0, 3, 7, 49, 캡틴짹, 60581520, EZgaming, 15.5, 5, 10.5
+3, 20, Hart, YumLa, 원더풀투나잇, Defense, 20, 11, 11, 6, 1, 0, 4, 0, 7, 3, 49, 얼큰한돼지국밥, 60581520, EZgaming, 15.5, 5, 10.5
+3, 19, Lenox, 무폿, 캐소드라쉬, Defense, 19, 11, 11, 6, 1, 0, 4, 0, 1, 10, 30, Elisha, 60581520, EZgaming, 15.5, 5, 10.5
+4, 20, Piolo, 맬리를, 히드라-새벽, Defense, 19, 15, 15, 6, 8, 0, 1, 0, 6, 8, 67, YumLa, 60581520, 신구대e스포츠, 15, 4, 11
+4, 20, Xuelin, 미소, 주와이외즈, Defense, 20, 15, 15, 6, 8, 0, 1, 0, 5, 6, 51, YumLa, 60581520, 신구대e스포츠, 15, 4, 11
+4, 20, Cathy, 캐시운석은인권임, 타나토스, Defense, 19, 15, 15, 6, 8, 0, 1, 0, 4, 10, 40, YumLa, 60581520, 신구대e스포츠, 15, 4, 11
+5, 17, Silvia, 젊음l광란l자유, 마탄의사수, Defense, 16, 6, 6, 0, 5, 0, 1, 0, 1, 3, 45, 맬리를, 60581520, 혼긱 이니쉬, 6.5, 3, 3.5
+5, 17, Garnet, 백연화, 스파이의우산, Defense, 16, 6, 6, 0, 5, 0, 1, 0, 3, 3, 20, 미소, 60581520, 혼긱 이니쉬, 6.5, 3, 3.5
+5, 17, William, Flushh, 프리즘볼, Defense, 17, 6, 6, 0, 5, 0, 1, 0, 2, 4, 36, 미소, 60581520, 혼긱 이니쉬, 6.5, 3, 3.5
+6, 15, Haze, 슈크림라때, XCR, Defense, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 38, Elisha, 60581520, 나섬즈, 2, 2, 0
+6, 16, Karla, sand1024, 영광금귀신기노, Defense, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 45, YumLa, 60581520, 나섬즈, 2, 2, 0
+6, 16, Felix, 바위게의질주, 장팔사모, Defense, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 51, , 60581520, 나섬즈, 2, 2, 0
+7, 13, YuMin, 루미아섬경비원, 더스타, Defense, 13, 8, 8, 0, 5, 0, 3, 0, 5, 2, 17, Lohel, 60581520, C.A.S, 6.5, 1, 5.5
+7, 13, Aya, 야나미, 아그니, Defense, 13, 8, 8, 0, 5, 0, 3, 0, 2, 5, 27, asdasdsa, 60581520, C.A.S, 6.5, 1, 5.5
+7, 14, Alonso, 별별, 디바인피스트, Defense, 13, 8, 8, 0, 5, 0, 3, 0, 1, 5, 13, asdasdsa, 60581520, C.A.S, 6.5, 1, 5.5
+8, 10, Abigail, 별제비, 빔엑스, Defense, 8, 3, 3, 0, 3, 0, 0, 0, 0, 2, 10, 미소, 60581520, ExP, 1.5, 0, 1.5
+8, 10, Tsubame, 소환사의협곡으로, 플레솃, Defense, 8, 3, 3, 0, 3, 0, 0, 0, 3, 0, 5, 미소, 60581520, ExP, 1.5, 0, 1.5
+8, 10, Nicky, 낭만18세검사, 디바인피스트, Defense, 8, 3, 3, 0, 3, 0, 0, 0, 0, 1, 18, Elisha, 60581520, ExP, 1.5, 0, 1.5
