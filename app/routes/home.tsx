@@ -5,6 +5,7 @@ import {
   calculatePlayerScores,
   ESCAPE_BONUS,
   parsePlayers,
+  TERMINATE_BONUS,
   type GameRecord,
 } from "../lib/er-scores";
 
@@ -17,11 +18,16 @@ export function meta({}: Route.MetaArgs) {
 
 const STORAGE_KEY = "lumi-scrim-games";
 const ESCAPE_KEY = "lumi-scrim-escapes";
+const TERMINATE_SCORE_KEY = "lumi-scrim-terminate-score";
+const ESCAPE_SCORE_KEY = "lumi-scrim-escape-score";
 
 export default function Home() {
   const [games, setGames] = useState<GameRecord[]>([]);
   const [escapes, setEscapes] = useState<Record<string, number>>({});
   const [csv, setCsv] = useState("");
+  // 전역 점수 설정 (localStorage 저장, 모든 판에 소급 적용)
+  const [terminateScore, setTerminateScore] = useState(TERMINATE_BONUS);
+  const [escapeScore, setEscapeScore] = useState(ESCAPE_BONUS);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -33,6 +39,10 @@ export default function Home() {
       if (raw) setGames(JSON.parse(raw));
       const rawEsc = localStorage.getItem(ESCAPE_KEY);
       if (rawEsc) setEscapes(JSON.parse(rawEsc));
+      const rawTerm = localStorage.getItem(TERMINATE_SCORE_KEY);
+      if (rawTerm !== null) setTerminateScore(Number(rawTerm));
+      const rawEscScore = localStorage.getItem(ESCAPE_SCORE_KEY);
+      if (rawEscScore !== null) setEscapeScore(Number(rawEscScore));
     } catch {
       /* 무시 */
     }
@@ -48,7 +58,18 @@ export default function Home() {
     if (loaded) localStorage.setItem(ESCAPE_KEY, JSON.stringify(escapes));
   }, [escapes, loaded]);
 
-  const leaderboard = useMemo(() => buildLeaderboard(games, escapes), [games, escapes]);
+  useEffect(() => {
+    if (loaded) localStorage.setItem(TERMINATE_SCORE_KEY, String(terminateScore));
+  }, [terminateScore, loaded]);
+
+  useEffect(() => {
+    if (loaded) localStorage.setItem(ESCAPE_SCORE_KEY, String(escapeScore));
+  }, [escapeScore, loaded]);
+
+  const leaderboard = useMemo(
+    () => buildLeaderboard(games, escapes, terminateScore, escapeScore),
+    [games, escapes, terminateScore, escapeScore]
+  );
 
   const changeEscape = (nickname: string, delta: number) => {
     setEscapes((prev) => {
@@ -63,6 +84,7 @@ export default function Home() {
   const addGame = () => {
     if (!csv.trim()) return;
     try {
+      // 원본 점수만 저장. 터미네이트/탈출 점수는 순위표에서 전역 설정으로 다시 계산됨
       const scores = calculatePlayerScores(parsePlayers(csv));
       setGames((g) => [...g, { id: crypto.randomUUID(), name: `${g.length + 1}판`, scores }]);
       setCsv("");
@@ -145,6 +167,44 @@ export default function Home() {
           </button>
         </section>
 
+        {/* 점수 설정 (전역 · 저장됨 · 모든 판에 소급 적용) */}
+        <section className="mt-4 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+          <h2 className="text-sm font-semibold">점수 설정</h2>
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+            바꾸면 저장되어 모든 판의 순위에 즉시 반영됩니다.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-x-8 gap-y-3">
+            <div className="flex items-center gap-2">
+              <label htmlFor="terminate" className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                터미네이트 점수
+              </label>
+              <input
+                id="terminate"
+                type="number"
+                step="0.1"
+                min="0"
+                value={terminateScore}
+                onChange={(e) => setTerminateScore(Number(e.target.value))}
+                className="w-24 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1 text-sm tabular-nums focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="escape" className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                탈출 점수
+              </label>
+              <input
+                id="escape"
+                type="number"
+                step="0.1"
+                min="0"
+                value={escapeScore}
+                onChange={(e) => setEscapeScore(Number(e.target.value))}
+                className="w-24 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1 text-sm tabular-nums focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        </section>
+
         {/* 추가된 판 목록 */}
         {games.length > 0 && (
           <section className="mt-4 flex flex-wrap items-center gap-2">
@@ -181,7 +241,7 @@ export default function Home() {
         {leaderboard.length > 0 && (
           <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
             <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-900 px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
-              <span>누적 순위 · 총 {games.length}판 · 탈출 +{ESCAPE_BONUS}점/회</span>
+              <span>누적 순위 · 총 {games.length}판 · 탈출 +{escapeScore}점/회</span>
               <button
                 onClick={copyResult}
                 className="rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"

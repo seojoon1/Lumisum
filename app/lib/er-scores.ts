@@ -135,7 +135,10 @@ export function parsePlayers(csvText: string): PlayerData[] {
  *  - 터미네이트는 팀 인원수를 CSV에서 세어 "전원 처치"인 경우만 부여.
  *  - 팀킬/자살은 제외.
  */
-export function calculatePlayerScores(matchData: PlayerData[]): PlayerScore[] {
+export function calculatePlayerScores(
+  matchData: PlayerData[],
+  terminateBonus: number = TERMINATE_BONUS
+): PlayerScore[] {
   const playerToTeam = new Map<string, string>();
   matchData.forEach((p) => playerToTeam.set(p.nickname, p.teamName));
 
@@ -155,7 +158,7 @@ export function calculatePlayerScores(matchData: PlayerData[]): PlayerScore[] {
   for (const targetTeam in teamDeathLog) {
     for (const killerTeam in teamDeathLog[targetTeam]) {
       if (teamDeathLog[targetTeam][killerTeam] >= teamSize[targetTeam]) {
-        terminateScores[killerTeam] = (terminateScores[killerTeam] || 0) + TERMINATE_BONUS;
+        terminateScores[killerTeam] = (terminateScores[killerTeam] || 0) + terminateBonus;
       }
     }
   }
@@ -186,15 +189,23 @@ export interface CumulativeRow {
  * 여러 판(GameRecord[])을 닉네임 기준으로 누적 합산해 순위표를 만든다.
  * 루미섬 내전은 판마다 팀이 바뀌므로, 팀이 아니라 닉네임이 기준이 된다.
  *
- * @param escapes 닉네임별 탈출 횟수 (수동 입력). 1회당 ESCAPE_BONUS 점 추가.
+ * 터미네이트/탈출 점수는 전역 설정값이므로, 저장된 원본 데이터로 매번 다시 계산한다.
+ * (설정을 바꾸면 모든 판에 소급 적용됨)
+ *
+ * @param escapes 닉네임별 탈출 횟수 (수동 입력). 1회당 escapeBonus 점 추가.
+ * @param terminateBonus 터미네이트 1회당 점수 (팀 전원에게 부여).
+ * @param escapeBonus 탈출 1회당 점수.
  */
 export function buildLeaderboard(
   games: GameRecord[],
-  escapes: Record<string, number> = {}
+  escapes: Record<string, number> = {},
+  terminateBonus: number = TERMINATE_BONUS,
+  escapeBonus: number = ESCAPE_BONUS
 ): CumulativeRow[] {
   const acc = new Map<string, { totalScore: number; games: number }>();
   for (const g of games) {
-    for (const s of g.scores) {
+    // 저장된 원본(순위/킬/팀/킬러)으로 현재 터미네이트 점수를 다시 적용
+    for (const s of calculatePlayerScores(g.scores, terminateBonus)) {
       const cur = acc.get(s.nickname) ?? { totalScore: 0, games: 0 };
       cur.totalScore += s.totalScore;
       cur.games += 1;
@@ -209,7 +220,7 @@ export function buildLeaderboard(
         nickname,
         games: v.games,
         escapes: escapeCount,
-        totalScore: v.totalScore + escapeCount * ESCAPE_BONUS,
+        totalScore: v.totalScore + escapeCount * escapeBonus,
       };
     })
     .sort((a, b) => b.totalScore - a.totalScore);
