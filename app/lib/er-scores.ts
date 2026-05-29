@@ -163,3 +163,48 @@ export function calculatePlayerScores(matchData: PlayerData[]): PlayerScore[] {
     return { ...p, terminateBonus, totalScore: p.rankScore + p.killScore + terminateBonus };
   });
 }
+
+/** 한 판의 점수를 한 줄에 담는 기록 */
+export interface GameRecord {
+  id: string;
+  name: string;
+  scores: PlayerScore[];
+}
+
+/** 누적 순위표 한 줄 (닉네임 기준) */
+export interface CumulativeRow {
+  rank: number; // 동점은 같은 순위 (1,2,2,4 …)
+  nickname: string;
+  totalScore: number;
+  games: number; // 참여 판 수
+}
+
+/**
+ * 여러 판(GameRecord[])을 닉네임 기준으로 누적 합산해 순위표를 만든다.
+ * 루미섬 내전은 판마다 팀이 바뀌므로, 팀이 아니라 닉네임이 기준이 된다.
+ */
+export function buildLeaderboard(games: GameRecord[]): CumulativeRow[] {
+  const acc = new Map<string, { totalScore: number; games: number }>();
+  for (const g of games) {
+    for (const s of g.scores) {
+      const cur = acc.get(s.nickname) ?? { totalScore: 0, games: 0 };
+      cur.totalScore += s.totalScore;
+      cur.games += 1;
+      acc.set(s.nickname, cur);
+    }
+  }
+
+  const rows = [...acc.entries()]
+    .map(([nickname, v]) => ({ nickname, totalScore: v.totalScore, games: v.games }))
+    .sort((a, b) => b.totalScore - a.totalScore);
+
+  // 동점 처리: 표준 순위(앞 등수 인원만큼 건너뜀)
+  let lastScore = Number.NaN;
+  let lastRank = 0;
+  return rows.map((r, i) => {
+    const rank = r.totalScore === lastScore ? lastRank : i + 1;
+    lastScore = r.totalScore;
+    lastRank = rank;
+    return { rank, ...r };
+  });
+}
