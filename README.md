@@ -1,87 +1,50 @@
-# Welcome to React Router!
+# 루미섬 내전 점수 계산기 (lumisum)
 
-A modern, production-ready template for building full-stack React applications using React Router.
+이터널리턴 **루미섬 내전**의 게임 결과 CSV를 넣으면, 닉네임 기준으로 점수를 누적 집계해 순위표를 만들고, 공지용 텍스트로 복사해주는 웹 도구입니다.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+루미섬 내전은 **판마다 팀 구성이 바뀌기 때문에** 팀이 아니라 개인(닉네임) 단위로 여러 판의 점수를 합산해야 합니다. 이 서비스는 그 누적 계산을 자동화합니다.
 
-## Features
+## 점수 규칙
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
-
-## Getting Started
-
-### Installation
-
-Install the dependencies:
-
-```bash
-npm install
-```
-
-### Development
-
-Start the development server with HMR:
-
-```bash
-npm run dev
-```
-
-Your application will be available at `http://localhost:5173`.
-
-## Building for Production
-
-Create a production build:
-
-```bash
-npm run build
-```
-
-## Deployment
-
-### Docker Deployment
-
-To build and run using Docker:
-
-```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
-```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
+한 판의 개인 점수는 다음과 같이 계산됩니다.
 
 ```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
+개인 점수 = 순위 점수(tournament rank score)
+          + 킬 점수(tournament kill score)
+          + 터미네이트 보너스
 ```
 
-## Styling
+- **터미네이트 보너스**: 한 팀이 상대 팀 **전원**을 처치하면 그 팀 전원에게 **+1.5점**. (팀킬/자살은 제외, 팀 인원수는 CSV에서 자동 계산)
+- 전체 순위는 모든 판의 개인 점수를 **닉네임 기준으로 합산**해 매깁니다. (동점은 같은 순위)
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+## 주요 기능
+
+- 📋 **CSV 붙여넣기 / 파일 업로드** — 이터널리턴 결과 CSV를 그대로 입력
+- 🔁 **판별 누적 집계** — 판을 하나씩 추가하면 닉네임 기준으로 점수 누적
+- 💾 **자동 저장** — 브라우저 `localStorage`에 저장되어 새로고침해도 이전 판 기록 유지
+- 🗑️ **판 삭제 / 전체 초기화**
+- 📢 **공지용 복사** — 순위표를 디스코드·카톡 등에 붙여넣기 좋은 텍스트로 클립보드 복사
+- 🌗 다크 모드 지원
+
+### CSV 형식
+
+이터널리턴 공식 결과 CSV를 그대로 사용할 수 있습니다. 다음 컬럼을 자동 인식합니다(한글/영문 헤더 모두 지원, 대소문자·공백 무시).
+
+| 내부 필드 | 인식하는 헤더 예시 |
+| --- | --- |
+| 닉네임 | `nickname`, `닉네임` |
+| 처치자 | `killer`, `처치자` (해당 플레이어를 처치한 유저 닉네임) |
+| 팀 | `teamName`, `팀` |
+| 순위 점수 | `tournament rank score`, `순위점수` |
+| 킬 점수 | `tournament kill score`, `킬점수` |
+
+## 시작하기
+
+
+## 기술 스택
+
+React Router 7 (SSR) · React 19 · TypeScript · Tailwind CSS · Vite
 
 ---
 
-Built with ❤️ using React Router.
+made by seojoon1
