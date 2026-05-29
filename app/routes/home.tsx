@@ -21,6 +21,7 @@ export default function Home() {
   const [csv, setCsv] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // 저장된 이전 판 기록 불러오기 (브라우저 전용)
   useEffect(() => {
@@ -50,6 +51,31 @@ export default function Home() {
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
+  };
+
+  // 공지용 텍스트 만들기
+  const announcement = useMemo(() => {
+    if (leaderboard.length === 0) return "";
+    const medal = (rank: number) => (rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`);
+    const fmt = (n: number) => String(Math.round(n * 100) / 100);
+    const lines = leaderboard.map((r) => `${medal(r.rank)} ${r.nickname} - ${fmt(r.totalScore)}점`);
+    return [`📢 루미섬 내전 결과 (총 ${games.length}판)`, "", ...lines].join("\n");
+  }, [leaderboard, games.length]);
+
+  const copyResult = async () => {
+    try {
+      await navigator.clipboard.writeText(announcement);
+    } catch {
+      // 클립보드 권한 실패 시 폴백
+      const ta = document.createElement("textarea");
+      ta.value = announcement;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   };
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,8 +158,14 @@ export default function Home() {
         {/* 누적 순위표 */}
         {leaderboard.length > 0 && (
           <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
-            <div className="bg-gray-100 dark:bg-gray-900 px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
-              누적 순위 · 총 {games.length}판
+            <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-900 px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
+              <span>누적 순위 · 총 {games.length}판</span>
+              <button
+                onClick={copyResult}
+                className="rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+              >
+                {copied ? "복사됨 ✓" : "공지용 복사"}
+              </button>
             </div>
             <table className="w-full text-sm">
               <thead className="bg-gray-100 dark:bg-gray-900 text-left text-gray-500 dark:text-gray-400">
