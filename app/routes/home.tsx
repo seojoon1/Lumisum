@@ -11,6 +11,7 @@ import {
 import Footer from "../components/footer";
 import LBC from "../components/leaderboard"; // 리더보드 컴포넌트 분리
 import PrevRecord from "../components/prevRecord"; // 이전 기록 관리 컴포넌트 분리
+import { useAnnouncement, useLocalStorage } from "../utils/hook"; // 공지용 텍스트 훅
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -25,50 +26,17 @@ const TERMINATE_SCORE_KEY = "lumi-scrim-terminate-score";
 const ESCAPE_SCORE_KEY = "lumi-scrim-escape-score";
 
 export default function Home() {
-  const [games, setGames] = useState<GameRecord[]>([]);
-  const [escapes, setEscapes] = useState<Record<string, number>>({});
+  const [games, setGames] = useLocalStorage<GameRecord[]>(STORAGE_KEY, []);
+  const [escapes, setEscapes] = useLocalStorage<Record<string, number>>(ESCAPE_KEY, {});
   const [csv, setCsv] = useState("");
   // 전역 점수 설정 (localStorage 저장, 모든 판에 소급 적용)
-  const [terminateScore, setTerminateScore] = useState(TERMINATE_BONUS);
-  const [escapeScore, setEscapeScore] = useState(ESCAPE_BONUS);
+  const [terminateScore, setTerminateScore] = useLocalStorage(TERMINATE_SCORE_KEY, TERMINATE_BONUS);
+  const [escapeScore, setEscapeScore] = useLocalStorage(ESCAPE_SCORE_KEY, ESCAPE_BONUS);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // 저장된 이전 판 기록 불러오기 (브라우저 전용)
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setGames(JSON.parse(raw));
-      const rawEsc = localStorage.getItem(ESCAPE_KEY);
-      if (rawEsc) setEscapes(JSON.parse(rawEsc));
-      const rawTerm = localStorage.getItem(TERMINATE_SCORE_KEY);
-      if (rawTerm !== null) setTerminateScore(Number(rawTerm));
-      const rawEscScore = localStorage.getItem(ESCAPE_SCORE_KEY);
-      if (rawEscScore !== null) setEscapeScore(Number(rawEscScore));
-    } catch {
-      /* 무시 */
-    }
-    setLoaded(true);
-  }, []);
-
-  // 변경 시 저장
-  useEffect(() => {
-    if (loaded) localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
-  }, [games, loaded]);
-
-  useEffect(() => {
-    if (loaded) localStorage.setItem(ESCAPE_KEY, JSON.stringify(escapes));
-  }, [escapes, loaded]);
-
-  useEffect(() => {
-    if (loaded) localStorage.setItem(TERMINATE_SCORE_KEY, String(terminateScore));
-  }, [terminateScore, loaded]);
-
-  useEffect(() => {
-    if (loaded) localStorage.setItem(ESCAPE_SCORE_KEY, String(escapeScore));
-  }, [escapeScore, loaded]);
-
   const leaderboard = useMemo(
     () => buildLeaderboard(games, escapes, terminateScore, escapeScore),
     [games, escapes, terminateScore, escapeScore]
@@ -98,13 +66,8 @@ export default function Home() {
   };
 
   // 공지용 텍스트 만들기
-  const announcement = useMemo(() => {
-    if (leaderboard.length === 0) return "";
-    const medal = (rank: number) => (rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`);
-    const fmt = (n: number) => String(Math.round(n * 100) / 100);
-    const lines = leaderboard.map((r) => `${medal(r.rank)} ${r.nickname} - ${fmt(r.totalScore)}점`);
-    return [`📢 루미섬 내전 결과 (총 ${games.length}판)`, "", ...lines].join("\n");
-  }, [leaderboard, games.length]);
+const announcement = useAnnouncement(leaderboard, games);
+
 
   const copyResult = async () => {
     try {
@@ -145,6 +108,11 @@ export default function Home() {
         <h1 className="text-2xl font-bold">루미섬 내전 점수 계산기</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           판마다 결과 CSV를 추가하면 닉네임 기준으로 점수를 누적합니다.
+        </p>
+        <p className="mt-1 text-xs text-gray-400 dark:text-gray-600">
+          정보를 원한다면? <a href="/info" className="text-blue-600 hover:underline">
+            여기
+          </a>를 클릭하세요.
         </p>
 
         {/* 판 추가 */}
