@@ -10,6 +10,7 @@ import {
 } from "../lib/er-scores";
 import Footer from "../components/footer";
 import LBC from "../components/leaderboard"; // 리더보드 컴포넌트 분리
+import PrevRecord from "../components/prevRecord"; // 이전 기록 관리 컴포넌트 분리
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -128,6 +129,16 @@ export default function Home() {
     e.target.value = "";
   };
 
+  const resetGame = (id: string) => {
+    setGames((all) => all.filter((x) => x.id !== id));
+  };
+  const resetAllGames = () => {
+    setGames([]);
+    setEscapes({});
+    setEscapeScore(ESCAPE_BONUS);
+    setTerminateScore(TERMINATE_BONUS);
+  };
+
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
       <div className="mx-auto max-w-3xl px-4 py-10">
@@ -208,40 +219,7 @@ export default function Home() {
         </section>
 
         {/* 추가된 판 목록 */}
-        {games.length > 0 && (
-          <section className="mt-4 flex flex-wrap items-center gap-2">
-            {games.map((g) => (
-              <span
-                key={g.id}
-                className="inline-flex items-center gap-1.5 rounded-full bg-gray-200 dark:bg-gray-800 py-1 pl-3 pr-1.5 text-xs"
-              >
-                {g.name} · {g.scores.length}명
-                <button
-                  onClick={() => setGames((all) => all.filter((x) => x.id !== g.id))}
-                  className="rounded-full px-1 text-gray-500 hover:bg-gray-300 dark:hover:bg-gray-700 hover:text-red-600"
-                  title="이 판 삭제"
-                >
-                  ✕
-                </button>
-              </span>
-            ))}
-            <button
-              onClick={() => {
-                if (confirm("모든 판 기록을 지울까요? (탈출 기록 포함)")) {
-                  setGames([]);
-                  setEscapes({});
-                  setEscapeScore(ESCAPE_BONUS); // 기본 값 탈출 2, 터미 1.5로 초기화
-                  setTerminateScore(TERMINATE_BONUS);
-                  
-                }
-              }}
-              className="ml-auto text-xs text-gray-500 hover:text-red-600"
-            >
-              전체 초기화
-            </button>
-          </section>
-        )}
-
+        {games.length > 0 && <PrevRecord games={games} resetAllGames={resetAllGames} resetGame={resetGame} />}
         {/* 누적 순위표 */}
         {leaderboard.length > 0 && <LBC leaderboard={leaderboard} games={games} escapeScore={escapeScore} changeEscape={changeEscape} copyResult={copyResult} copied={copied} />}
         <Footer />
