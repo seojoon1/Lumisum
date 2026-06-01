@@ -228,6 +228,9 @@ export default function Home() {
                 if (confirm("모든 판 기록을 지울까요? (탈출 기록 포함)")) {
                   setGames([]);
                   setEscapes({});
+                  setEscapeScore(ESCAPE_BONUS); // 기본 값 탈출 2, 터미 1.5로 초기화
+                  setTerminateScore(TERMINATE_BONUS);
+                  
                 }
               }}
               className="ml-auto text-xs text-gray-500 hover:text-red-600"
