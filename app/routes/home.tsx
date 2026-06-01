@@ -8,6 +8,7 @@ import {
   TERMINATE_BONUS,
   type GameRecord,
 } from "../lib/er-scores";
+import Footer from "../components/footer";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -299,10 +300,7 @@ export default function Home() {
             </table>
           </div>
         )}
-
-        <footer className="mt-10 text-center text-xs text-gray-400 dark:text-gray-600">
-          made by seojoon1
-        </footer>
+        <Footer />
       </div>
     </main>
   );
