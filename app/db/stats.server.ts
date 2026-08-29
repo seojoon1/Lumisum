@@ -8,7 +8,7 @@
  *  - TURSO_DATABASE_URL : libsql://... (없으면 로컬 파일 data/lumisum.db 사용)
  *  - TURSO_AUTH_TOKEN   : 원격일 때만 필요
  */
-import { createClient } from "@libsql/client";
+import { createClient, type InStatement } from "@libsql/client";
 import {
   calculatePlayerScores,
   ESCAPE_BONUS,
@@ -65,7 +65,8 @@ export async function saveSession(
   await ready;
   const now = new Date().toISOString();
 
-  const stmts = [
+  // 첫 두 문장만 보고 args 를 string[] 로 좁히지 않도록 명시적으로 타입을 준다
+  const stmts: InStatement[] = [
     { sql: "DELETE FROM match_players WHERE session_id = ?", args: [sessionId] },
     { sql: "DELETE FROM session_escapes WHERE session_id = ?", args: [sessionId] },
   ];
