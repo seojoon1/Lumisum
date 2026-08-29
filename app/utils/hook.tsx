@@ -22,7 +22,9 @@ export function useLocalStorage<T>(
   deserialize: (s: string) => T = JSON.parse
 ) {
   const [value, setValue] = useState<T>(initial);
-  const loaded = useRef(false);
+  // 복원이 끝났는지. ref 가 아니라 state 인 이유는, 복원 완료를 기다리는
+  // 바깥 effect(예: 배점을 URL 로 동기화)가 이 값의 변화로 다시 돌아야 하기 때문.
+  const [loaded, setLoaded] = useState(false);
 
   // 복원 (마운트 시 1회)
   useEffect(() => {
@@ -32,13 +34,13 @@ export function useLocalStorage<T>(
     } catch {
       /* 무시 */
     }
-    loaded.current = true;
+    setLoaded(true);
   }, [key]);
 
-  // 변경 시 저장 (복원 끝난 뒤에만)
+  // 변경 시 저장 (복원 끝난 뒤에만 — 안 그러면 초기값이 저장된 값을 덮어쓴다)
   useEffect(() => {
-    if (loaded.current) localStorage.setItem(key, serialize(value));
-  }, [key, value]);
+    if (loaded) localStorage.setItem(key, serialize(value));
+  }, [key, value, loaded]);
 
-  return [value, setValue] as const;
+  return [value, setValue, loaded] as const;
 }
