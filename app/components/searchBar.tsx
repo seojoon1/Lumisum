@@ -1,4 +1,4 @@
-/** 닉네임 검색창. 순위표를 닉네임으로 걸러낸다. */
+/** 닉네임 검색창. 전적표를 닉네임으로 걸러낸다. */
 export default function SearchBar({
   query,
   setQuery,
@@ -22,7 +22,7 @@ export default function SearchBar({
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="닉네임으로 순위표 검색…"
+          placeholder="닉네임 검색…"
           className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 py-2 pl-9 pr-9 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
         {query && (
