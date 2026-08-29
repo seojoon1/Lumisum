@@ -30,18 +30,24 @@ export async function loader({ request }: Route.LoaderArgs) {
   const terminateBonus = num("tb", TERMINATE_BONUS);
   const escapeBonus = num("eb", ESCAPE_BONUS);
 
-  // DB 조회 두 건은 서로 독립적이라 병렬로
-  const [stats, summary] = await Promise.all([
-    getPlayerStats(terminateBonus, escapeBonus),
-    getSummary(),
-  ]);
-
-  return {
-    stats,
-    summary,
-    terminateBonus,
-    escapeBonus,
-  };
+  // DB가 안 붙어도 페이지는 떠야 한다. 여기서 던지면 서버 함수째로 500 이 된다.
+  try {
+    // 조회 두 건은 서로 독립적이라 병렬로
+    const [stats, summary] = await Promise.all([
+      getPlayerStats(terminateBonus, escapeBonus),
+      getSummary(),
+    ]);
+    return { stats, summary, terminateBonus, escapeBonus, dbError: null };
+  } catch (e) {
+    console.error("[stats] DB 조회 실패:", e);
+    return {
+      stats: [],
+      summary: { games: 0, players: 0, sessions: 0 },
+      terminateBonus,
+      escapeBonus,
+      dbError: e instanceof Error ? e.message : String(e),
+    };
+  }
 }
 
 /** 홈 화면에서 fetcher 로 호출하는 저장/삭제 엔드포인트 */
@@ -59,7 +65,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Stats({ loaderData }: Route.ComponentProps) {
-  const { stats, summary, terminateBonus, escapeBonus } = loaderData;
+  const { stats, summary, terminateBonus, escapeBonus, dbError } = loaderData;
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState("");
 
@@ -132,10 +138,17 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
           </div>
         </section>
 
+        {dbError && (
+          <div className="mt-6 rounded-lg border border-red-300 bg-red-50 dark:border-red-900/60 dark:bg-red-950/40 p-4 text-sm text-red-700 dark:text-red-300">
+            <p className="font-semibold">전적 DB에 연결하지 못했습니다.</p>
+            <p className="mt-1 whitespace-pre-wrap text-xs">{dbError}</p>
+          </div>
+        )}
+
         {stats.length > 0 ? (
           visible.length > 0 && <StatsTable stats={visible} />
         ) : (
-          <p className="mt-6 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 p-8 text-center text-sm text-gray-500 dark:text-gray-400">
+          !dbError && <p className="mt-6 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 p-8 text-center text-sm text-gray-500 dark:text-gray-400">
             아직 저장된 기록이 없습니다. 계산기에서 판을 추가한 뒤 <b>전적 DB에 저장</b>을 눌러주세요.
           </p>
         )}
