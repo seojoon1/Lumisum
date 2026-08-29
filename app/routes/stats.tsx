@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import type { Route } from "./+types/stats";
 import { ESCAPE_BONUS, TERMINATE_BONUS } from "../lib/er-scores";
@@ -10,6 +11,7 @@ import {
 import StatsTable from "../components/statsTable";
 import Footer from "../components/footer";
 import Tabs from "../components/tabs";
+import SearchBar from "../components/searchBar";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -53,6 +55,14 @@ export async function action({ request }: Route.ActionArgs) {
 export default function Stats({ loaderData }: Route.ComponentProps) {
   const { stats, summary, terminateBonus, escapeBonus } = loaderData;
   const [params, setParams] = useSearchParams();
+  const [query, setQuery] = useState("");
+
+  // 검색어로 걸러낸 전적표. 순위 번호는 전체 기준이라 필터해도 실제 등수가 유지된다.
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return stats;
+    return stats.filter((s) => s.nickname.toLowerCase().includes(q));
+  }, [stats, query]);
 
   const setBonus = (key: "tb" | "eb", value: string) => {
     const next = new URLSearchParams(params);
@@ -68,6 +78,15 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
           저장된 내전 {summary.sessions}회 · {summary.games}판 · {summary.players}명 · 평균 점수 순
         </p>
         <Tabs />
+
+        {stats.length > 0 && (
+          <SearchBar
+            query={query}
+            setQuery={setQuery}
+            matched={visible.length}
+            total={stats.length}
+          />
+        )}
 
         {/* 배점 (조회 시점에 다시 계산 — 저장된 원본 기록은 그대로) */}
         <section className="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
@@ -108,7 +127,7 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
         </section>
 
         {stats.length > 0 ? (
-          <StatsTable stats={stats} />
+          visible.length > 0 && <StatsTable stats={visible} />
         ) : (
           <p className="mt-6 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 p-8 text-center text-sm text-gray-500 dark:text-gray-400">
             아직 저장된 기록이 없습니다. 계산기에서 판을 추가한 뒤 <b>전적 DB에 저장</b>을 눌러주세요.
