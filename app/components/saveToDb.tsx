@@ -35,12 +35,6 @@ export default function SaveToDb({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            to="/stats"
-            className="rounded-md border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800"
-          >
-            통산 전적 보기
-          </Link>
           <button
             onClick={() => send("save")}
             disabled={busy || games.length === 0}
@@ -54,6 +48,9 @@ export default function SaveToDb({
       {fetcher.data?.ok && fetcher.data.games !== undefined && (
         <p className="mt-3 text-xs text-green-600 dark:text-green-400">
           {fetcher.data.games}판을 저장했습니다.{" "}
+          <Link to="/stats" className="underline hover:no-underline">
+            통산 전적 보기
+          </Link>{" · "}
           <button onClick={() => send("delete")} className="underline hover:no-underline">
             이 내전 기록 삭제
           </button>
