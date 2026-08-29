@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import type { Route } from "./+types/stats";
 import { ESCAPE_BONUS, TERMINATE_BONUS } from "../lib/er-scores";
@@ -12,6 +12,8 @@ import StatsTable from "../components/statsTable";
 import Footer from "../components/footer";
 import Tabs from "../components/tabs";
 import SearchBar from "../components/searchBar";
+import { useLocalStorage } from "../utils/hook";
+import { STORAGE_KEYS } from "../lib/storage-keys";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -65,9 +67,21 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Stats({ loaderData }: Route.ComponentProps) {
-  const { stats, summary, terminateBonus, escapeBonus, dbError } = loaderData;
+  // 배점은 loaderData 가 아니라 localStorage 값을 화면에 쓴다 (loader 는 계산에만 사용)
+  const { stats, summary, dbError } = loaderData;
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState("");
+
+  // 배점의 원본은 localStorage 다 (계산기 탭과 공유). 서버 loader 는 이 값을 읽을 수 없으므로
+  // 아래 effect 로 URL 에 실어 보내고, loader 가 그 값으로 다시 계산한다.
+  const [tScore, setTScore, tLoaded] = useLocalStorage(STORAGE_KEYS.terminateScore, TERMINATE_BONUS);
+  const [eScore, setEScore, eLoaded] = useLocalStorage(STORAGE_KEYS.escapeScore, ESCAPE_BONUS);
+
+  useEffect(() => {
+    if (!tLoaded || !eLoaded) return; // 복원 전에는 기본값이라 URL 을 건드리지 않는다
+    if (params.get("tb") === String(tScore) && params.get("eb") === String(eScore)) return;
+    setParams({ tb: String(tScore), eb: String(eScore) }, { replace: true, preventScrollReset: true });
+  }, [tScore, eScore, tLoaded, eLoaded, params, setParams]);
 
   // 검색어로 걸러낸 전적표. 순위 번호는 전체 기준이라 필터해도 실제 등수가 유지된다.
   const visible = useMemo(() => {
@@ -75,12 +89,6 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
     if (!q) return stats;
     return stats.filter((s) => s.nickname.toLowerCase().includes(q));
   }, [stats, query]);
-
-  const setBonus = (key: "tb" | "eb", value: string) => {
-    const next = new URLSearchParams(params);
-    next.set(key, value);
-    setParams(next, { replace: true });
-  };
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
@@ -104,7 +112,7 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
         <section className="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
           <h2 className="text-sm font-semibold">배점</h2>
           <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-            DB에는 순위점·킬점·터미네이트 횟수·탈출 횟수만 저장됩니다. 배점을 바꾸면 전체 전적이 즉시 다시 계산됩니다.
+            DB에는 순위점·킬점·터미네이트 횟수·탈출 횟수만 저장됩니다. 배점을 바꾸면 전체 전적이 즉시 다시 계산되고, 점수 계산기 탭과 같은 값을 씁니다.
           </p>
           <div className="mt-3 flex flex-wrap gap-x-8 gap-y-3">
             <div className="flex items-center gap-2">
@@ -116,8 +124,8 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
                 type="number"
                 step="0.1"
                 min="0"
-                value={terminateBonus}
-                onChange={(e) => setBonus("tb", e.target.value)}
+                value={tScore}
+                onChange={(e) => setTScore(Number(e.target.value))}
                 className="w-24 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1 text-sm tabular-nums focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
@@ -130,8 +138,8 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
                 type="number"
                 step="0.1"
                 min="0"
-                value={escapeBonus}
-                onChange={(e) => setBonus("eb", e.target.value)}
+                value={eScore}
+                onChange={(e) => setEScore(Number(e.target.value))}
                 className="w-24 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1 text-sm tabular-nums focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
