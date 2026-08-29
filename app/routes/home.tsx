@@ -11,6 +11,7 @@ import {
 import Footer from "../components/footer";
 import LBC from "../components/leaderboard"; // 리더보드 컴포넌트 분리
 import PrevRecord from "../components/prevRecord"; // 이전 기록 관리 컴포넌트 분리
+import SaveToDb from "../components/saveToDb"; // 서버 전적 DB 저장
 import { useAnnouncement, useLocalStorage } from "../utils/hook"; // 공지용 텍스트 훅
 
 export function meta({}: Route.MetaArgs) {
@@ -24,10 +25,13 @@ const STORAGE_KEY = "lumi-scrim-games";
 const ESCAPE_KEY = "lumi-scrim-escapes";
 const TERMINATE_SCORE_KEY = "lumi-scrim-terminate-score";
 const ESCAPE_SCORE_KEY = "lumi-scrim-escape-score";
+// 이번 내전을 서버 DB에서 식별하는 키. 전체 초기화 = 새 내전 시작이라 새로 발급한다.
+const SESSION_KEY = "lumi-scrim-session-id";
 
 export default function Home() {
   const [games, setGames] = useLocalStorage<GameRecord[]>(STORAGE_KEY, []);
   const [escapes, setEscapes] = useLocalStorage<Record<string, number>>(ESCAPE_KEY, {});
+  const [sessionId, setSessionId] = useLocalStorage(SESSION_KEY, "");
   const [csv, setCsv] = useState("");
   // 전역 점수 설정 (localStorage 저장, 모든 판에 소급 적용)
   const [terminateScore, setTerminateScore] = useLocalStorage(TERMINATE_SCORE_KEY, TERMINATE_BONUS);
@@ -50,6 +54,14 @@ export default function Home() {
       else next[nickname] = v;
       return next;
     });
+  };
+
+  /** 세션 ID는 첫 저장 시점에 발급한다 (마운트 시 만들면 localStorage 복원값을 덮어씀) */
+  const ensureSessionId = () => {
+    if (sessionId) return sessionId;
+    const id = crypto.randomUUID();
+    setSessionId(id);
+    return id;
   };
 
   const addGame = () => {
@@ -98,6 +110,8 @@ const announcement = useAnnouncement(leaderboard, games);
   const resetAllGames = () => {
     setGames([]);
     setEscapes({});
+    setSessionId(""); // 다음 저장 때 새 세션 ID를 발급해 이전 내전 기록을 덮어쓰지 않게 한다
+
     setEscapeScore(ESCAPE_BONUS);
     setTerminateScore(TERMINATE_BONUS);
   };
@@ -189,6 +203,9 @@ const announcement = useAnnouncement(leaderboard, games);
         {/* 추가된 판 목록 */}
         {games.length > 0 && <PrevRecord games={games} resetAllGames={resetAllGames} resetGame={resetGame} />}
         {/* 누적 순위표 */}
+        {games.length > 0 && (
+          <SaveToDb ensureSessionId={ensureSessionId} games={games} escapes={escapes} />
+        )}
         {leaderboard.length > 0 && <LBC leaderboard={leaderboard} games={games} escapeScore={escapeScore} changeEscape={changeEscape} copyResult={copyResult} copied={copied} />}
         <Footer />
       </div>

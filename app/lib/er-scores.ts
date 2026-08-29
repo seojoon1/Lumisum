@@ -235,3 +235,19 @@ export function buildLeaderboard(
     return { rank, ...r };
   });
 }
+
+/** 인원별 통산 전적 한 줄 (DB 집계 결과) */
+export interface PlayerStats {
+  rank: number;
+  nickname: string;
+  games: number;
+  totalScore: number;
+  avgScore: number;
+  /** 한 판 최고 점수 (탈출은 판 단위 기록이 아니라 제외) */
+  bestScore: number;
+  avgRankScore: number;
+  avgKillScore: number;
+  terminates: number;
+  escapes: number;
+  lastPlayedAt: string;
+}

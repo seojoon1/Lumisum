@@ -5,3 +5,6 @@
 # React Router
 /.react-router/
 /build/
+
+# SQLite 전적 DB
+/data/
