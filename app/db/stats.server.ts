@@ -8,7 +8,7 @@
  *  - TURSO_DATABASE_URL : libsql://... (없으면 로컬 파일 data/lumisum.db 사용)
  *  - TURSO_AUTH_TOKEN   : 원격일 때만 필요
  */
-import { createClient, type InStatement } from "@libsql/client";
+import type { Client, InStatement } from "@libsql/client";
 import {
   calculatePlayerScores,
   ESCAPE_BONUS,
@@ -19,10 +19,10 @@ import {
 
 export type { PlayerStats };
 
-const db = createClient({
-  url: process.env.TURSO_DATABASE_URL ?? "file:data/lumisum.db",
-  authToken: process.env.TURSO_AUTH_TOKEN,
-});
+const DB_URL = process.env.TURSO_DATABASE_URL ?? "file:data/lumisum.db";
+const IS_LOCAL_FILE = DB_URL.startsWith("file:");
+/** 버셀 등 서버리스 환경인지 (파일 쓰기가 막혀 있다) */
+const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
 const SCHEMA = `
   CREATE TABLE IF NOT EXISTS match_players (
@@ -48,9 +48,36 @@ const SCHEMA = `
   );
 `;
 
-// 스키마 준비는 프로세스당 한 번만. 모든 쿼리가 이 프라미스를 먼저 기다린다.
-const g = globalThis as unknown as { __lumisumReady?: Promise<void> };
-const ready = (g.__lumisumReady ??= db.executeMultiple(SCHEMA));
+/**
+ * 클라이언트는 **첫 쿼리 때** 만든다.
+ * 모듈 로드 시점에 만들면 실패했을 때 서버 함수 자체가 죽어(FUNCTION_INVOCATION_FAILED)
+ * 전적과 무관한 페이지까지 500 이 된다.
+ *
+ * 로컬 파일(file:)은 네이티브 바인딩이 필요한 node 엔트리를, 원격은 네이티브가 필요 없는
+ * web 엔트리를 쓴다. 서버리스에서는 web 엔트리만 로드되므로 네이티브 모듈 문제가 없다.
+ */
+let clientPromise: Promise<Client> | null = null;
+
+function getDb(): Promise<Client> {
+  return (clientPromise ??= (async () => {
+    if (IS_LOCAL_FILE && IS_SERVERLESS) {
+      throw new Error(
+        "TURSO_DATABASE_URL / TURSO_AUTH_TOKEN 환경변수가 설정되지 않았습니다. " +
+          "서버리스 환경에서는 로컬 파일 DB를 쓸 수 없습니다. " +
+          "버셀 Settings → Environment Variables 에 두 값을 등록하고 다시 배포하세요."
+      );
+    }
+    const { createClient } = IS_LOCAL_FILE
+      ? await import("@libsql/client")
+      : await import("@libsql/client/web");
+    const client = createClient({ url: DB_URL, authToken: process.env.TURSO_AUTH_TOKEN });
+    await client.executeMultiple(SCHEMA);
+    return client;
+  })().catch((e) => {
+    clientPromise = null; // 다음 요청에서 다시 시도할 수 있게 캐시를 비운다
+    throw e;
+  }));
+}
 
 /**
  * 한 세션(오늘 내전) 전체를 DB에 반영한다.
@@ -62,7 +89,7 @@ export async function saveSession(
   games: GameRecord[],
   escapes: Record<string, number>
 ) {
-  await ready;
+  const db = await getDb();
   const now = new Date().toISOString();
 
   // 첫 두 문장만 보고 args 를 string[] 로 좁히지 않도록 명시적으로 타입을 준다
@@ -98,7 +125,7 @@ export async function saveSession(
 
 /** 세션 기록을 DB에서 제거 (잘못 저장했을 때 되돌리기) */
 export async function deleteSession(sessionId: string) {
-  await ready;
+  const db = await getDb();
   const [players] = await db.batch(
     [
       { sql: "DELETE FROM match_players WHERE session_id = ?", args: [sessionId] },
@@ -111,7 +138,7 @@ export async function deleteSession(sessionId: string) {
 
 /** 이 세션이 이미 DB에 몇 판 저장돼 있는지 */
 export async function sessionSaved(sessionId: string) {
-  await ready;
+  const db = await getDb();
   const rs = await db.execute({
     sql: "SELECT COUNT(DISTINCT game_id) AS n FROM match_players WHERE session_id = ?",
     args: [sessionId],
@@ -127,7 +154,7 @@ export async function getPlayerStats(
   terminateBonus: number = TERMINATE_BONUS,
   escapeBonus: number = ESCAPE_BONUS
 ): Promise<PlayerStats[]> {
-  await ready;
+  const db = await getDb();
   const rs = await db.execute({
     sql: `
       WITH per_game AS (
@@ -197,7 +224,7 @@ export async function getPlayerStats(
 
 /** DB 전체 요약 (헤더 표시용) */
 export async function getSummary() {
-  await ready;
+  const db = await getDb();
   const rs = await db.execute(
     `SELECT COUNT(DISTINCT game_id)   AS games,
             COUNT(DISTINCT nickname)  AS players,
