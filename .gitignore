@@ -8,3 +8,6 @@
 
 # SQLite 전적 DB
 /data/
+
+# Vercel
+/.vercel/
