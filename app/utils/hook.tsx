@@ -9,8 +9,11 @@ export function useAnnouncement(leaderboard: LeaderRow[], games: GameRecord[]) {
     if (leaderboard.length === 0) return "";
     const medal = (rank: number) => (rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`);
     const fmt = (n: number) => String(Math.round(n * 100) / 100);
-    const seed = (rank: number) => (rank <= 8 ? "1st" : rank >= 17 ? "3rd" : "2nd");
-    const lines = leaderboard.map((r) => `${medal(r.rank)} ${r.nickname} - ${fmt(r.totalScore)}점 (${seed(r.rank)})`);
+    // 시드는 등수 번호가 아니라 "정렬 순서"로 3등분한다.
+    // 등수는 동점이면 건너뛰므로(1,1,1,4,4,4,7…) 번호로 자르면 시드별 인원이 틀어진다.
+    // (24명 → 8/8/8, 21명 → 7/7/7, 20명 → 7/7/6)
+    const seed = (i: number) => `${Math.floor((i * 3) / leaderboard.length) + 1}시드`;
+    const lines = leaderboard.map((r, i) => `${medal(r.rank)} ${r.nickname} - ${fmt(r.totalScore)}점 (${seed(i)})`);
     return [`📢 루미섬 내전 결과 (총 ${games.length}판)`, "", ...lines].join("\n");
   }, [leaderboard, games.length]);
 }
