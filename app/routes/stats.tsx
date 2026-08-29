@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import type { Route } from "./+types/stats";
 import { ESCAPE_BONUS, TERMINATE_BONUS } from "../lib/er-scores";
 import {
@@ -9,6 +9,7 @@ import {
 } from "../db/stats.server";
 import StatsTable from "../components/statsTable";
 import Footer from "../components/footer";
+import Tabs from "../components/tabs";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -66,11 +67,7 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           저장된 내전 {summary.sessions}회 · {summary.games}판 · {summary.players}명 · 평균 점수 순
         </p>
-        <p className="mt-1 text-xs text-gray-400 dark:text-gray-600">
-          <Link to="/" className="text-blue-600 hover:underline">
-            계산기로 돌아가기
-          </Link>
-        </p>
+        <Tabs />
 
         {/* 배점 (조회 시점에 다시 계산 — 저장된 원본 기록은 그대로) */}
         <section className="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
