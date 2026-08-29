@@ -9,7 +9,8 @@ export function useAnnouncement(leaderboard: LeaderRow[], games: GameRecord[]) {
     if (leaderboard.length === 0) return "";
     const medal = (rank: number) => (rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`);
     const fmt = (n: number) => String(Math.round(n * 100) / 100);
-    const lines = leaderboard.map((r) => `${medal(r.rank)} ${r.nickname} - ${fmt(r.totalScore)}점`);
+    const seed = (rank: number) => (rank <= 8 ? "1st" : rank >= 17 ? "3rd" : "2nd");
+    const lines = leaderboard.map((r) => `${medal(r.rank)} ${r.nickname} - ${fmt(r.totalScore)}점 (${seed(r.rank)})`);
     return [`📢 루미섬 내전 결과 (총 ${games.length}판)`, "", ...lines].join("\n");
   }, [leaderboard, games.length]);
 }
