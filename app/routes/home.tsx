@@ -13,6 +13,7 @@ import LBC from "../components/leaderboard"; // 리더보드 컴포넌트 분리
 import PrevRecord from "../components/prevRecord"; // 이전 기록 관리 컴포넌트 분리
 import SaveToDb from "../components/saveToDb"; // 서버 전적 DB 저장
 import Tabs from "../components/tabs"; // 계산기 ↔ 전적 DB 탭
+import SearchBar from "../components/searchBar"; // 순위표 닉네임 검색
 import { useAnnouncement, useLocalStorage } from "../utils/hook"; // 공지용 텍스트 훅
 
 export function meta({}: Route.MetaArgs) {
@@ -34,6 +35,7 @@ export default function Home() {
   const [escapes, setEscapes] = useLocalStorage<Record<string, number>>(ESCAPE_KEY, {});
   const [sessionId, setSessionId] = useLocalStorage(SESSION_KEY, "");
   const [csv, setCsv] = useState("");
+  const [query, setQuery] = useState("");
   // 전역 점수 설정 (localStorage 저장, 모든 판에 소급 적용)
   const [terminateScore, setTerminateScore] = useLocalStorage(TERMINATE_SCORE_KEY, TERMINATE_BONUS);
   const [escapeScore, setEscapeScore] = useLocalStorage(ESCAPE_SCORE_KEY, ESCAPE_BONUS);
@@ -46,6 +48,13 @@ export default function Home() {
     () => buildLeaderboard(games, escapes, terminateScore, escapeScore),
     [games, escapes, terminateScore, escapeScore]
   );
+
+  // 검색어로 걸러낸 순위표. 순위 번호는 전체 기준이라 필터해도 그대로 유지된다.
+  const visibleLeaderboard = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return leaderboard;
+    return leaderboard.filter((r) => r.nickname.toLowerCase().includes(q));
+  }, [leaderboard, query]);
 
   const changeEscape = (nickname: string, delta: number) => {
     setEscapes((prev) => {
@@ -126,6 +135,15 @@ const announcement = useAnnouncement(leaderboard, games);
         </p>
         <Tabs />
 
+        {leaderboard.length > 0 && (
+          <SearchBar
+            query={query}
+            setQuery={setQuery}
+            matched={visibleLeaderboard.length}
+            total={leaderboard.length}
+          />
+        )}
+
         {/* 판 추가 */}
         <section className="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
           <div className="flex items-center justify-between">
@@ -203,7 +221,7 @@ const announcement = useAnnouncement(leaderboard, games);
         {games.length > 0 && (
           <SaveToDb ensureSessionId={ensureSessionId} games={games} escapes={escapes} />
         )}
-        {leaderboard.length > 0 && <LBC leaderboard={leaderboard} games={games} escapeScore={escapeScore} changeEscape={changeEscape} copyResult={copyResult} copied={copied} />}
+        {visibleLeaderboard.length > 0 && <LBC leaderboard={visibleLeaderboard} games={games} escapeScore={escapeScore} changeEscape={changeEscape} copyResult={copyResult} copied={copied} />}
         <Footer />
       </div>
     </main>
