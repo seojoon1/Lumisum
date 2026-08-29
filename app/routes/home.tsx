@@ -12,6 +12,7 @@ import Footer from "../components/footer";
 import LBC from "../components/leaderboard"; // 리더보드 컴포넌트 분리
 import PrevRecord from "../components/prevRecord"; // 이전 기록 관리 컴포넌트 분리
 import SaveToDb from "../components/saveToDb"; // 서버 전적 DB 저장
+import Tabs from "../components/tabs"; // 계산기 ↔ 전적 DB 탭
 import { useAnnouncement, useLocalStorage } from "../utils/hook"; // 공지용 텍스트 훅
 
 export function meta({}: Route.MetaArgs) {
@@ -123,11 +124,7 @@ const announcement = useAnnouncement(leaderboard, games);
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           판마다 결과 CSV를 추가하면 닉네임 기준으로 점수를 누적합니다.
         </p>
-        <p className="mt-1 text-xs text-gray-400 dark:text-gray-600">
-          정보를 원한다면? <a href="/info" className="text-blue-600 hover:underline">
-            여기
-          </a>를 클릭하세요.
-        </p>
+        <Tabs />
 
         {/* 판 추가 */}
         <section className="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
