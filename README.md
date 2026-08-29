@@ -31,10 +31,10 @@
 
 ### 전적 DB
 
-- 저장 위치: `data/lumisum.db` (환경변수 `LUMISUM_DB` 로 변경 가능, git 에서 제외됨)
+- 저장소는 **libSQL(Turso)**. `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` 를 주면 원격 DB에, 없으면 로컬 파일 `data/lumisum.db` 에 붙습니다 (로컬 파일은 git 에서 제외됨). 값은 `.env.example` 참고.
 - DB에는 **계산된 점수가 아니라 원본 지표**(순위점 · 킬점 · 터미네이트 횟수 · 탈출 횟수)만 넣습니다. 배점은 `/stats` 의 입력값으로 조회할 때마다 다시 계산되므로, 나중에 규칙을 바꿔도 과거 기록에 그대로 소급 적용됩니다.
 - 한 번의 내전 = 한 세션(`sessionId`). 같은 세션을 다시 저장하면 **덮어쓰기** 되므로 판을 더 추가한 뒤 다시 눌러도 중복되지 않습니다. 계산기에서 **전체 초기화**를 하면 다음 저장부터 새 세션이 됩니다.
-- 도커로 띄울 때는 기록이 날아가지 않도록 볼륨을 붙이세요: `docker run -v lumisum-data:/app/data ...`
+- 서버리스(버셀 등)에 올릴 때는 파일 쓰기가 막혀 있으므로 **반드시 Turso 환경변수를 설정**해야 합니다. 도커로 로컬 파일 모드를 쓸 때는 볼륨을 붙이세요: `docker run -v lumisum-data:/app/data ...`
 
 ### CSV 형식
 
@@ -51,7 +51,7 @@
 
 ## 기술 스택
 
-React Router 7 (SSR) · React 19 · TypeScript · Tailwind CSS · Vite · SQLite(better-sqlite3)
+React Router 7 (SSR) · React 19 · TypeScript · Tailwind CSS · Vite · libSQL/Turso
 
 ---
 
