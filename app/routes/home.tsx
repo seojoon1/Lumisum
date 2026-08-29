@@ -14,6 +14,7 @@ import PrevRecord from "../components/prevRecord"; // 이전 기록 관리 컴�
 import SaveToDb from "../components/saveToDb"; // 서버 전적 DB 저장
 import Tabs from "../components/tabs"; // 계산기 ↔ 전적 DB 탭
 import { useAnnouncement, useLocalStorage } from "../utils/hook"; // 공지용 텍스트 훅
+import { STORAGE_KEYS } from "../lib/storage-keys";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -22,21 +23,16 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-const STORAGE_KEY = "lumi-scrim-games";
-const ESCAPE_KEY = "lumi-scrim-escapes";
-const TERMINATE_SCORE_KEY = "lumi-scrim-terminate-score";
-const ESCAPE_SCORE_KEY = "lumi-scrim-escape-score";
-// 이번 내전을 서버 DB에서 식별하는 키. 전체 초기화 = 새 내전 시작이라 새로 발급한다.
-const SESSION_KEY = "lumi-scrim-session-id";
+
 
 export default function Home() {
-  const [games, setGames] = useLocalStorage<GameRecord[]>(STORAGE_KEY, []);
-  const [escapes, setEscapes] = useLocalStorage<Record<string, number>>(ESCAPE_KEY, {});
-  const [sessionId, setSessionId] = useLocalStorage(SESSION_KEY, "");
+  const [games, setGames] = useLocalStorage<GameRecord[]>(STORAGE_KEYS.games, []);
+  const [escapes, setEscapes] = useLocalStorage<Record<string, number>>(STORAGE_KEYS.escapes, {});
+  const [sessionId, setSessionId] = useLocalStorage(STORAGE_KEYS.sessionId, "");
   const [csv, setCsv] = useState("");
   // 전역 점수 설정 (localStorage 저장, 모든 판에 소급 적용)
-  const [terminateScore, setTerminateScore] = useLocalStorage(TERMINATE_SCORE_KEY, TERMINATE_BONUS);
-  const [escapeScore, setEscapeScore] = useLocalStorage(ESCAPE_SCORE_KEY, ESCAPE_BONUS);
+  const [terminateScore, setTerminateScore] = useLocalStorage(STORAGE_KEYS.terminateScore, TERMINATE_BONUS);
+  const [escapeScore, setEscapeScore] = useLocalStorage(STORAGE_KEYS.escapeScore, ESCAPE_BONUS);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
