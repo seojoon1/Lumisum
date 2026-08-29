@@ -21,7 +21,7 @@ export function meta({}: Route.MetaArgs) {
 }
 
 /** 배점은 쿼리스트링으로 받아 조회 시점에 다시 계산한다 (?tb=1.5&eb=2) */
-export function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const num = (key: string, fallback: number) => {
     const v = Number(url.searchParams.get(key));
@@ -30,9 +30,15 @@ export function loader({ request }: Route.LoaderArgs) {
   const terminateBonus = num("tb", TERMINATE_BONUS);
   const escapeBonus = num("eb", ESCAPE_BONUS);
 
+  // DB 조회 두 건은 서로 독립적이라 병렬로
+  const [stats, summary] = await Promise.all([
+    getPlayerStats(terminateBonus, escapeBonus),
+    getSummary(),
+  ]);
+
   return {
-    stats: getPlayerStats(terminateBonus, escapeBonus),
-    summary: getSummary(),
+    stats,
+    summary,
     terminateBonus,
     escapeBonus,
   };
@@ -43,9 +49,9 @@ export async function action({ request }: Route.ActionArgs) {
   const body = await request.json();
   try {
     if (body.intent === "delete") {
-      return { ok: true, ...deleteSession(body.sessionId) };
+      return { ok: true, ...(await deleteSession(body.sessionId)) };
     }
-    const result = saveSession(body.sessionId, body.games ?? [], body.escapes ?? {});
+    const result = await saveSession(body.sessionId, body.games ?? [], body.escapes ?? {});
     return { ok: true, ...result };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
