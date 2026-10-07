@@ -15,7 +15,7 @@ import SaveToDb from "../components/saveToDb"; // 서버 전적 DB 저장
 import Tabs from "../components/tabs"; // 계산기 ↔ 전적 DB 탭
 import { useAnnouncement, useLocalStorage } from "../utils/hook"; // 공지용 텍스트 훅
 import { STORAGE_KEYS } from "../lib/storage-keys";
-import { shuffleTeams, type TeamMember } from "../lib/team-shuffle";
+import { assignTeams, shuffleTeams, type TeamMember } from "../lib/team-shuffle";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -98,6 +98,8 @@ const announcement = useAnnouncement(leaderboard, games);
 
   // 1·2·3시드 한 명씩 묶어 팀 구성
   const onShuffle = () => setTeams(shuffleTeams(leaderboard.map((r) => r.nickname)));
+  // 1시드 순서대로, 2·3시드 역순으로 팀 구성
+  const onAssign = () => setTeams(assignTeams(leaderboard.map((r) => r.nickname)));
 
   const onFile =(e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -204,7 +206,7 @@ const announcement = useAnnouncement(leaderboard, games);
         {games.length > 0 && (
           <SaveToDb ensureSessionId={ensureSessionId} games={games} escapes={escapes} />
         )}
-        {leaderboard.length > 0 && <LBC leaderboard={leaderboard} games={games} escapeScore={escapeScore} changeEscape={changeEscape} copyResult={copyResult} copied={copied} teams={teams} onShuffle={onShuffle} />}
+        {leaderboard.length > 0 && <LBC leaderboard={leaderboard} games={games} escapeScore={escapeScore} changeEscape={changeEscape} copyResult={copyResult} copied={copied} teams={teams} onShuffle={onShuffle} onAssign={onAssign} />}
         <Footer />
       </div>
     </main>

@@ -1,7 +1,7 @@
 import {type GameRecord} from "../lib/er-scores";
 import { type TeamMember } from "../lib/team-shuffle";
 export default function Leaderboard(
-  { leaderboard, games, escapeScore, changeEscape, copyResult, copied, teams, onShuffle }: {
+  { leaderboard, games, escapeScore, changeEscape, copyResult, copied, teams, onShuffle, onAssign }: {
     leaderboard: { nickname: string; games: number; escapes: number; totalScore: number; rank: number }[];
     games: GameRecord[];
     escapeScore: number;
@@ -10,6 +10,7 @@ export default function Leaderboard(
     copied: boolean;
     teams: TeamMember[][];
     onShuffle: () => void;
+    onAssign: () => void;
   }
 ) {
   return (
@@ -29,9 +30,15 @@ export default function Leaderboard(
                 >
                   팀 셔플
                 </button>
+                <button
+                  onClick={onAssign}
+                  className="rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+                >
+                  팀 배정
+                </button>
               </div>
             </div>
-            {/* 셔플 결과: 팀마다 1·2·3시드 한 명씩 */}
+            {/* 셔플/배정 결과: 팀마다 1·2·3시드 한 명씩 */}
             {teams.length > 0 && (
               <div className="grid grid-cols-2 gap-2 border-b border-gray-200 dark:border-gray-800 p-3 sm:grid-cols-4">
                 {teams.map((team, t) => (
