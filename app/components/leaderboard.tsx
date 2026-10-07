@@ -13,12 +13,20 @@ export default function Leaderboard(
     <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
             <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-900 px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
               <span>누적 순위 · 총 {games.length}판 · 탈출 +{escapeScore}점/회</span>
-              <button
-                onClick={copyResult}
-                className="rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
-              >
-                {copied ? "복사됨 ✓" : "공지용 복사"}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={copyResult}
+                  className="rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+                >
+                  {copied ? "복사됨 ✓" : "공지용 복사"}
+                </button>
+                <button
+                  onClick={copyResult}
+                  className="rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+                >
+                  팀 셔플
+                </button>
+              </div>
             </div>
             <table className="w-full text-sm">
               <thead className="bg-gray-100 dark:bg-gray-900 text-left text-gray-500 dark:text-gray-400">
