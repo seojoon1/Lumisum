@@ -1,12 +1,15 @@
 import {type GameRecord} from "../lib/er-scores";
+import { type TeamMember } from "../lib/team-shuffle";
 export default function Leaderboard(
-  { leaderboard, games, escapeScore, changeEscape, copyResult, copied }: {
+  { leaderboard, games, escapeScore, changeEscape, copyResult, copied, teams, onShuffle }: {
     leaderboard: { nickname: string; games: number; escapes: number; totalScore: number; rank: number }[];
     games: GameRecord[];
     escapeScore: number;
     changeEscape: (nickname: string, delta: number) => void;
     copyResult: () => void;
     copied: boolean;
+    teams: TeamMember[][];
+    onShuffle: () => void;
   }
 ) {
   return (
@@ -21,13 +24,29 @@ export default function Leaderboard(
                   {copied ? "복사됨 ✓" : "공지용 복사"}
                 </button>
                 <button
-                  onClick={copyResult}
+                  onClick={onShuffle}
                   className="rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
                 >
                   팀 셔플
                 </button>
               </div>
             </div>
+            {/* 셔플 결과: 팀마다 1·2·3시드 한 명씩 */}
+            {teams.length > 0 && (
+              <div className="grid grid-cols-2 gap-2 border-b border-gray-200 dark:border-gray-800 p-3 sm:grid-cols-4">
+                {teams.map((team, t) => (
+                  <div key={t} className="rounded-md border border-gray-200 dark:border-gray-800 px-3 py-2 text-sm">
+                    <div className="mb-1 text-xs font-semibold text-gray-500 dark:text-gray-400">{t + 1}팀</div>
+                    {team.map((m) => (
+                      <div key={m.nickname} className="flex justify-between gap-2">
+                        <span className="truncate font-medium">{m.nickname}</span>
+                        <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">{m.seed}시드</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
             <table className="w-full text-sm">
               <thead className="bg-gray-100 dark:bg-gray-900 text-left text-gray-500 dark:text-gray-400">
                 <tr>
