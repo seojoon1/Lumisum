@@ -17,19 +17,37 @@ function shuffle<T>(arr: T[]): T[] {
 
 export type TeamMember = { nickname: string; seed: number };
 
-/**
- * 순위표 순서대로 받은 닉네임을 1·2·3시드 한 명씩 묶어 팀을 만든다.
- * 시드별 인원이 다르면(20명 → 7/7/6) 남는 팀은 2인 팀이 된다.
- */
-export function shuffleTeams(nicknames: string[]): TeamMember[][] {
+/** 순위표 순서대로 받은 닉네임을 시드별 그룹(순위 순서 유지)으로 나눈다 */
+function groupBySeed(nicknames: string[]): TeamMember[][] {
   const groups: TeamMember[][] = [[], [], []];
   nicknames.forEach((nickname, i) => {
     const seed = seedOf(i, nicknames.length);
     groups[seed - 1].push({ nickname, seed });
   });
-  const [s1, s2, s3] = groups.map(shuffle);
+  return groups;
+}
+
+/**
+ * 시드 그룹의 t번째끼리 묶어 팀을 만든다.
+ * 시드별 인원이 다르면(20명 → 7/7/6) 일부 팀은 2인 팀이 된다.
+ */
+function zipTeams([s1, s2, s3]: TeamMember[][]): TeamMember[][] {
   const teamCount = Math.max(s1.length, s2.length, s3.length);
   return Array.from({ length: teamCount }, (_, t) =>
     [s1[t], s2[t], s3[t]].filter((m): m is TeamMember => m !== undefined)
   );
+}
+
+/** 1·2·3시드에서 무작위로 한 명씩 묶어 팀을 만든다 */
+export function shuffleTeams(nicknames: string[]): TeamMember[][] {
+  return zipTeams(groupBySeed(nicknames).map(shuffle));
+}
+
+/**
+ * 1시드는 순위 순서대로, 2·3시드는 역순으로 묶어 팀을 만든다.
+ * (1팀 = 1시드 1번째 + 2시드 꼴찌 + 3시드 꼴찌, 2팀 = 1시드 2번째 + 뒤에서 2번째 …)
+ */
+export function assignTeams(nicknames: string[]): TeamMember[][] {
+  const [s1, s2, s3] = groupBySeed(nicknames);
+  return zipTeams([s1, [...s2].reverse(), [...s3].reverse()]);
 }
